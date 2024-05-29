@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aishalib"
+version = "0.0.3"
+authors = [
+  { name="Vladimir Petrukhin", email="man4j@ya.ru" },
+]
+description = "AI Smart Human Assistant Library"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "transformers>=4.41.1",
+  "jinja2>=3.1.4"
+]
+
+[project.urls]
+Homepage = "https://github.com/Equiron-AI/aishalib"
