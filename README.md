@@ -27,7 +27,7 @@ from aishalib.aishalib import Aisha
 from telegram import Update
 from telegram.ext import Application, MessageHandler, ContextTypes, filters
 
-TG_TOKEN = "6440843851:AAGB_-JvQLwP-j93LeV0p19bWDi2TH6K_bw"
+TG_TOKEN = "YOUR_TG_TOKEN"
 
 SYSTEM_PROMPT = """
 Ты умный бот помощник для общения в телеграме.
