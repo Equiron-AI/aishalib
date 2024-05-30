@@ -23,7 +23,55 @@ The following LLM backends are supported:
 
 ## Telegram bot example
 ```python
+from aishalib.aishalib import Aisha
+from telegram import Update
+from telegram.ext import Application, MessageHandler, ContextTypes, filters
 
+TG_TOKEN = "6440843851:AAGB_-JvQLwP-j93LeV0p19bWDi2TH6K_bw"
+
+SYSTEM_PROMPT = """
+Ты умный бот помощник для общения в телеграме.
+Ты общаешься в групповом чате с другими пользователями.
+Ты отвечаешь на русском языке.
+"""
+
+SYSTEM_INJECTION = """
+Последнее сообщение написал пользователь с идентификатором {user_id}.
+Используй эти идентификаторы для того, чтобы различать пользователей.
+Запрещено обращаться к пользователю по его идентификатору! Можно только по имени.
+Если пользователь не представился спроси как его зовут.
+Если исходя из контекста и смысла беседы это сообщение адресовано тебе или это общее сообщение для всех в чате то ты обязан на него ответить.
+Если это сообщение адресовано другому пользователю, то напиши специальную команду "ignoring_message" в ответе.
+"""
+
+def get_aisha(chat_id, tg_context):
+    if chat_id not in tg_context.user_data:
+        aisha = Aisha("http://127.0.0.1:8000/completion",
+                      "CohereForAI/c4ai-command-r-v01",
+                      prompt=SYSTEM_PROMPT,
+                      max_context=8192,
+                      max_predict=512)
+        tg_context.user_data[chat_id] = aisha
+    aisha = tg_context.user_data[chat_id]
+    aisha.load_context(chat_id)
+    return aisha
+
+async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    user_id = str(update.message.from_user.id)
+    aisha = get_aisha(str(chat_id), context)
+    aisha.add_user_request(update.message.text,
+                           system_injection=SYSTEM_INJECTION.replace("{user_id}", user_id))
+    text_response = aisha.completion(temp=0.0, top_p=0.5)
+    aisha.save_context(chat_id)
+    if "ignoring_message" not in text_response:
+        await context.bot.send_message(chat_id=chat_id,
+                                       text=text_response,
+                                       reply_to_message_id=update.message.message_id)
+
+application = Application.builder().token(TG_TOKEN).build()
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, process_message))
+application.run_polling()
 ```
 
 ## Chainlit example
