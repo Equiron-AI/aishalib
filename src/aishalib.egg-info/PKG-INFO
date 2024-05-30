@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: aishalib
-Version: 0.0.4
+Version: 0.0.5
 Summary: AI Smart Human Assistant Library
 Author-email: Vladimir Petrukhin <man4j@ya.ru>
 Project-URL: Homepage, https://github.com/Equiron-AI/aishalib
@@ -44,7 +44,7 @@ from aishalib.aishalib import Aisha
 from telegram import Update
 from telegram.ext import Application, MessageHandler, ContextTypes, filters
 
-TG_TOKEN = "6440843851:AAGB_-JvQLwP-j93LeV0p19bWDi2TH6K_bw"
+TG_TOKEN = "YOUR_TG_TOKEN"
 
 SYSTEM_PROMPT = """
 Ты умный бот помощник для общения в телеграме.
@@ -114,6 +114,29 @@ async def on_message(input_msg: cl.Message):
     response = await cl.make_async(aisha.completion)(temp=0.5, top_p=0.5)
     output_msg.content = response
     await output_msg.update()
+```
+
+## Document search example
+```python
+from aisha import Aisha
+
+MODEL_ID = "microsoft/Phi-3-medium-128k-instruct"
+COMPLETION_URL = "http://127.0.0.1:8000/completion"
+
+with open("document.txt") as f:
+    text = f.read()
+
+prompt = f"""Ты - поисковая система.
+Ниже представлен следующий текст по которому необходимо выполнять поиск.
+## Текст:
+{text}
+"""
+
+aisha = Aisha(MODEL_ID, COMPLETION_URL, prompt=prompt, max_context=40000, max_predict=8192)
+user_request = "Вопрос по документу"
+prompt = f"Верни релевантные фрагменты текста, которые наиболее точно соответствуют запросу пользователя: {user_request}."
+aisha.add_user_request(prompt)
+print(aisha.completion(temp=0.0, top_p=0.0))
 ```
 
 ## Run Llama.CPP Server backend

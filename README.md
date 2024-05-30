@@ -99,6 +99,29 @@ async def on_message(input_msg: cl.Message):
     await output_msg.update()
 ```
 
+## Document search example
+```python
+from aisha import Aisha
+
+MODEL_ID = "microsoft/Phi-3-medium-128k-instruct"
+COMPLETION_URL = "http://127.0.0.1:8000/completion"
+
+with open("document.txt") as f:
+    text = f.read()
+
+prompt = f"""Ты - поисковая система.
+Ниже представлен следующий текст по которому необходимо выполнять поиск.
+## Текст:
+{text}
+"""
+
+aisha = Aisha(MODEL_ID, COMPLETION_URL, prompt=prompt, max_context=40000, max_predict=8192)
+user_request = "Вопрос по документу"
+prompt = f"Верни релевантные фрагменты текста, которые наиболее точно соответствуют запросу пользователя: {user_request}."
+aisha.add_user_request(prompt)
+print(aisha.completion(temp=0.0, top_p=0.0))
+```
+
 ## Run Llama.CPP Server backend
 ```console
 llama.cpp/build/bin/server -m model_q5_k_m.gguf -ngl 99 -fa -c 4096 --host 0.0.0.0 --port 8000
