@@ -1,7 +1,11 @@
 import os
 import json
+import logging
 from transformers import AutoTokenizer, AutoConfig
 from aishalib.llmbackend import LlamaCppBackend
+
+
+logger = logging.getLogger(__name__)
 
 
 class Aisha:
@@ -23,21 +27,21 @@ class Aisha:
             self.system_injection_template = "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{system_injection}<|END_OF_TURN_TOKEN|>"
             inst = [{"role": "system", "content": prompt}]
             prompt_tokens = self.tokenizer.apply_chat_template(inst)
-            stop_token = self.tokenizer.eos_token
+            self.stop_token = self.tokenizer.eos_token
         elif config.model_type == "phi3":
-            self.generation_promp_template = "<|assistant|>"
-            self.user_req_template = "<|user|>{user_req}<|end|>"
-            self.system_injection_template = "<|user|>{system_injection}<|end|>"
-            inst = [{"role": "user", "content": prompt}]
-            prompt_tokens = [self.tokenizer.bos_token_id] + self.tokenizer.apply_chat_template(inst)
-            stop_token = "<|end|>"
+            self.generation_promp_template = "<|assistant|>\n"
+            self.user_req_template = "<|user|>\n{user_req}<|end|>\n"
+            self.system_injection_template = "<|system|>\n{system_injection}<|end|>\n"
+            prompt_text = self.tokenizer.bos_token + f"<|system|>\n{prompt}<|end|>\n"
+            prompt_tokens = self.tokenizer(prompt_text)["input_ids"]
+            self.stop_token = "<|end|>"
         else:
             raise RuntimeError("Unknown model: " + config.model_type)
 
-        self.llm_backend = LlamaCppBackend(llm_backend_url, stop_token, max_predict)
+        self.llm_backend = LlamaCppBackend(llm_backend_url, self.stop_token, max_predict)
         self.generation_prompt_tokens = self.tokenizer(self.generation_promp_template)["input_ids"]
-        self.instructions_len = len(inst)
         self.tokens = [prompt_tokens]
+        logger.info(f"System prompt size: " + str(len(prompt_tokens)))
 
     def sanitize(self, text):
         return text.replace("#", "").replace("<|", "").replace("|>", "")
@@ -59,7 +63,7 @@ class Aisha:
         request_tokens = sum(self.tokens, [])
         request_tokens += self.generation_prompt_tokens
         text_resp = self.llm_backend.completion(request_tokens, temp, top_p)
-        response_tokens = self.tokenizer(text_resp.strip() + self.tokenizer.eos_token)["input_ids"]
+        response_tokens = self.tokenizer(text_resp.strip() + self.stop_token)["input_ids"]
         response_tokens = self.generation_prompt_tokens + response_tokens
         self.tokens.append(response_tokens)
         return text_resp
@@ -79,5 +83,5 @@ class Aisha:
         busy_tokens = len(sum(self.tokens, []))
         free_tokens = self.max_context - busy_tokens
         while free_tokens < self.max_predict:
-            free_tokens += len(self.tokens[self.instructions_len])
-            del self.tokens[self.instructions_len]
+            free_tokens += len(self.tokens[1])
+            del self.tokens[1]
