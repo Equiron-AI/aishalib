@@ -41,13 +41,13 @@ class Aisha:
         self.llm_backend = LlamaCppBackend(llm_backend_url, self.stop_token, max_predict)
         self.generation_prompt_tokens = self.tokenizer(self.generation_promp_template)["input_ids"]
         self.tokens = [prompt_tokens]
-        logger.info(f"System prompt size: " + str(len(prompt_tokens)))
+        logger.info("System prompt size: " + str(len(prompt_tokens)))
 
     def sanitize(self, text):
         return text.replace("#", "").replace("<|", "").replace("|>", "")
 
-    def add_user_request(self, user_request, system_injection=""):
-        text = self.user_req_template.replace("{user_req}", self.sanitize(user_request.strip()))
+    def add_user_request(self, user_request, meta_info="", system_injection=""):
+        text = self.user_req_template.replace("{user_req}", self.sanitize(user_request.strip()) + meta_info)
         if system_injection:
             text += self.system_injection_template.replace("{system_injection}", system_injection)
         tokens = self.tokenizer(text)["input_ids"]
