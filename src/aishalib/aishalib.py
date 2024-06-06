@@ -85,3 +85,6 @@ class Aisha:
         while free_tokens < self.max_predict:
             free_tokens += len(self.tokens[1])
             del self.tokens[1]
+
+    def clear_context(self):
+        del self.tokens[1:]
