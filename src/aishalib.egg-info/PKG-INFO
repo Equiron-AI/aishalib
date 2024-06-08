@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: aishalib
-Version: 0.0.12
+Version: 0.0.13
 Summary: AI Smart Human Assistant Library
 Author-email: Vladimir Petrukhin <man4j@ya.ru>
 Project-URL: Homepage, https://github.com/Equiron-AI/aishalib
@@ -123,19 +123,17 @@ from aisha import Aisha
 MODEL_ID = "microsoft/Phi-3-medium-128k-instruct"
 COMPLETION_URL = "http://127.0.0.1:8000/completion"
 
-with open("document.txt") as f:
-    text = f.read()
+with open("documents.txt") as f:
+    docs = f.read()
 
-prompt = f"""Ты - поисковая система.
-Ниже представлен следующий текст по которому необходимо выполнять поиск.
-## Текст:
-{text}
-"""
+system_prompt = f"""## Ты - поисковая система.
+Ниже находятся документы по которым необходимо выполнять поиск.
+## Документы:
+{docs}
+## Ответь на вопрос пользователя используя эти документы: """
 
-aisha = Aisha(MODEL_ID, COMPLETION_URL, prompt=prompt, max_context=40000, max_predict=8192)
-user_request = "Вопрос по документу"
-prompt = f"Верни релевантные фрагменты текста, которые наиболее точно соответствуют запросу пользователя: {user_request}."
-aisha.add_user_request(prompt)
+aisha = Aisha(MODEL_ID, COMPLETION_URL, prompt=system_prompt, max_context=32768, max_predict=1024)
+aisha.add_user_request("Вопрос по документу")
 print(aisha.completion(temp=0.0, top_p=0.0))
 ```
 
