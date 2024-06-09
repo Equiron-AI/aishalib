@@ -101,10 +101,10 @@ async def on_message(input_msg: cl.Message):
 
 ## Document search example
 ```python
-from aisha import Aisha
+from aishalib.aishalib import Aisha
 
 MODEL_ID = "microsoft/Phi-3-medium-128k-instruct"
-COMPLETION_URL = "http://127.0.0.1:8000/completion"
+COMPLETION_URL = "http://172.17.0.1:8088/completion"
 
 with open("documents.txt") as f:
     docs = f.read()
@@ -115,8 +115,8 @@ system_prompt = f"""## Ты - поисковая система.
 {docs}
 ## Ответь на вопрос пользователя используя эти документы: """
 
-aisha = Aisha(MODEL_ID, COMPLETION_URL, prompt=system_prompt, max_context=32768, max_predict=1024)
-aisha.add_user_request("Вопрос по документу")
+aisha = Aisha(COMPLETION_URL, MODEL_ID, prompt=system_prompt, max_context=32768, max_predict=1024)
+aisha.add_user_request("Что такое ...?")
 print(aisha.completion(temp=0.0, top_p=0.0))
 ```
 
