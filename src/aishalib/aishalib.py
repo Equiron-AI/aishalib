@@ -21,7 +21,21 @@ class Aisha:
 
         config = AutoConfig.from_pretrained(base_model)
 
-        if config.model_type == "cohere":
+        if config.model_type == "qwen2":
+            self.generation_promp_template = "<|im_start|>assistant\n"
+            self.user_req_template = "<|im_start|>user\n{user_req}<|im_end|>"
+            self.system_injection_template = "<|im_start|>system\n{system_injection}<|im_end|>"
+            inst = [{"role": "system", "content": prompt}]
+            prompt_tokens = self.tokenizer.apply_chat_template(inst)
+            self.stop_token = "<|im_end|>"
+        elif config.model_type == "llama":
+            self.generation_promp_template = "<|start_header_id|>assistant<|end_header_id|>\n"
+            self.user_req_template = "<|start_header_id|>user<|end_header_id|>\n{user_req}<|eot_id|>"
+            self.system_injection_template = "<|start_header_id|>system<|end_header_id|>\n{system_injection}<|eot_id|>"
+            inst = [{"role": "system", "content": prompt}]
+            prompt_tokens = self.tokenizer.apply_chat_template(inst)
+            self.stop_token = "<|eot_id|>"
+        elif config.model_type == "cohere":
             self.generation_promp_template = "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
             self.user_req_template = "<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{user_req}<|END_OF_TURN_TOKEN|>"
             self.system_injection_template = "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{system_injection}<|END_OF_TURN_TOKEN|>"

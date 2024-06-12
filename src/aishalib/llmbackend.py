@@ -23,4 +23,6 @@ class LlamaCppBackend:
                    "frequency_penalty": 0,
                    "stop": [self.stop_token],
                    "cache_prompt": True}
-        return requests.post(self.url, json=request).json()["content"]
+        response = requests.post(self.url, json=request)
+        response.raise_for_status()
+        return response.json()["content"]
