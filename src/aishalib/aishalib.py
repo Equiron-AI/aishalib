@@ -73,10 +73,27 @@ class Aisha:
         self.tokens.append(self.tokenizer(text)["input_ids"])
         self._cut_context()
 
-    def completion(self, temp=0.0, top_p=0.5):
+    async def completion(self, temp=0.0, top_p=0.5):
         request_tokens = sum(self.tokens, [])
         request_tokens += self.generation_prompt_tokens
-        text_resp = self.llm_backend.completion(request_tokens, temp, top_p)
+        text_resp = await self.llm_backend.completion(request_tokens, temp, top_p)
+        response_tokens = self.tokenizer(text_resp.strip() + self.stop_token)["input_ids"]
+        response_tokens = self.generation_prompt_tokens + response_tokens
+        self.tokens.append(response_tokens)
+        return text_resp
+
+    async def stream_completion(self, callback, temp=0.0, top_p=0.5):
+        request_tokens = sum(self.tokens, [])
+        request_tokens += self.generation_prompt_tokens
+        stream = self.llm_backend.stream_completion(request_tokens, temp, top_p)
+        text_resp = ""
+        for event in stream:
+            parsed_event = json.loads(event.data)
+            if parsed_event["stop"]:
+                break
+            content = parsed_event["content"]
+            text_resp += content
+            await callback(content)
         response_tokens = self.tokenizer(text_resp.strip() + self.stop_token)["input_ids"]
         response_tokens = self.generation_prompt_tokens + response_tokens
         self.tokens.append(response_tokens)

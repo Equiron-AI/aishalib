@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: aishalib
-Version: 0.0.15
+Version: 0.0.17
 Summary: AI Smart Human Assistant Library
 Author-email: Vladimir Petrukhin <man4j@ya.ru>
 Project-URL: Homepage, https://github.com/Equiron-AI/aishalib
@@ -14,6 +14,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: transformers>=4.41.1
 Requires-Dist: jinja2>=3.1.4
+Requires-Dist: sseclient-py
 
 # AISHA Lib: A High-Level Abstraction for Building AI Assistants
 In the evolving landscape of artificial intelligence, the development of smart assistants has become increasingly prevalent. To streamline this process, the **AISHA (AI Smart Human Assistant) Lib** offers a high-level abstraction designed for creating AI assistants. This versatile library supports various large language models (LLMs) and different LLM backends, providing developers with a powerful and flexible toolset.

@@ -1,4 +1,5 @@
 import requests
+import sseclient
 
 
 class LlamaCppBackend:
@@ -7,7 +8,7 @@ class LlamaCppBackend:
         self.stop_token = stop_token
         self.max_predict = max_predict
 
-    def completion(self, request_tokens, temp=0.5, top_p=0.5):
+    async def completion(self, request_tokens, temp=0.5, top_p=0.5):
         request = {"prompt": request_tokens,
                    "stream": False,
                    "n_predict": self.max_predict,
@@ -26,3 +27,23 @@ class LlamaCppBackend:
         response = requests.post(self.url, json=request)
         response.raise_for_status()
         return response.json()["content"]
+
+    def stream_completion(self, request_tokens, temp=0.5, top_p=0.5):
+        request = {"prompt": request_tokens,
+                   "stream": True,
+                   "n_predict": self.max_predict,
+                   "temperature": temp,
+                   "repeat_last_n": 0,
+                   "repeat_penalty": 1.0,
+                   "top_k": -1,
+                   "top_p": top_p,
+                   "min_p": 0,
+                   "tfs_z": 1,
+                   "typical_p": 1,
+                   "presence_penalty": 0,
+                   "frequency_penalty": 0,
+                   "stop": [self.stop_token],
+                   "cache_prompt": True}
+
+        response = requests.post(self.url, json=request, stream=True, headers={'Accept': 'text/event-stream'})
+        return sseclient.SSEClient(response).events()
