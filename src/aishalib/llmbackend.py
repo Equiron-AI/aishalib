@@ -8,7 +8,7 @@ class LlamaCppBackend:
         self.stop_token = stop_token
         self.max_predict = max_predict
 
-    async def completion(self, request_tokens, temp=0.5, top_p=0.5):
+    def completion(self, request_tokens, temp=0.5, top_p=0.5):
         request = {"prompt": request_tokens,
                    "stream": False,
                    "n_predict": self.max_predict,
