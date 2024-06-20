@@ -9,11 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class Aisha:
-    def __init__(self, llm_backend_url, base_model, max_context=4096, max_predict=256, prompt="", prompt_file=""):
-        self.llm_backend_url = llm_backend_url
+    def __init__(self, llm_backend, base_model, max_context=4096, prompt="", prompt_file=""):
         self.tokenizer = AutoTokenizer.from_pretrained(base_model, add_bos_token=False)
         self.max_context = max_context
-        self.max_predict = max_predict
+        self.max_predict = llm_backend.max_predict
 
         if prompt_file:
             with open(prompt_file) as f:
@@ -52,7 +51,10 @@ class Aisha:
         else:
             raise RuntimeError("Unknown model: " + config.model_type)
 
-        self.llm_backend = LlamaCppBackend(llm_backend_url, self.stop_token, max_predict)
+        self.llm_backend = llm_backend
+        self.llm_backend.stop_token = self.stop_token
+        self.llm_backend.base_model = base_model
+        self.llm_backend.tokenizer = self.tokenizer
         self.generation_prompt_tokens = self.tokenizer(self.generation_promp_template)["input_ids"]
         self.tokens = [prompt_tokens]
         logger.info("System prompt size: " + str(len(prompt_tokens)))
@@ -85,15 +87,7 @@ class Aisha:
     async def stream_completion(self, callback, temp=0.0, top_p=0.5):
         request_tokens = sum(self.tokens, [])
         request_tokens += self.generation_prompt_tokens
-        stream = self.llm_backend.stream_completion(request_tokens, temp, top_p)
-        text_resp = ""
-        for event in stream:
-            parsed_event = json.loads(event.data)
-            if parsed_event["stop"]:
-                break
-            content = parsed_event["content"]
-            text_resp += content
-            await callback(content)
+        text_resp = await self.llm_backend.stream_completion(request_tokens, callback, temp, top_p)
         response_tokens = self.tokenizer(text_resp.strip() + self.stop_token)["input_ids"]
         response_tokens = self.generation_prompt_tokens + response_tokens
         self.tokens.append(response_tokens)
