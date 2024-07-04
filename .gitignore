@@ -1,3 +1,5 @@
 dist
 .ipynb_checkpoints
 src/aishalib/__pycache__
+/.project
+/.pydevproject

@@ -2,7 +2,6 @@ import os
 import json
 import logging
 from transformers import AutoTokenizer, AutoConfig
-from aishalib.llmbackend import LlamaCppBackend
 
 
 logger = logging.getLogger(__name__)
@@ -20,44 +19,41 @@ class Aisha:
 
         config = AutoConfig.from_pretrained(base_model)
 
-        if config.model_type == "qwen2":
-            self.generation_promp_template = "<|im_start|>assistant\n"
-            self.user_req_template = "<|im_start|>user\n{user_req}<|im_end|>"
-            self.system_injection_template = "<|im_start|>system\n{system_injection}<|im_end|>"
-            inst = [{"role": "system", "content": prompt}]
-            prompt_tokens = self.tokenizer.apply_chat_template(inst)
-            self.stop_token = "<|im_end|>"
-        elif config.model_type == "llama":
-            self.generation_promp_template = "<|start_header_id|>assistant<|end_header_id|>\n"
-            self.user_req_template = "<|start_header_id|>user<|end_header_id|>\n{user_req}<|eot_id|>"
-            self.system_injection_template = "<|start_header_id|>system<|end_header_id|>\n{system_injection}<|eot_id|>"
-            inst = [{"role": "system", "content": prompt}]
-            prompt_tokens = self.tokenizer.apply_chat_template(inst)
-            self.stop_token = "<|eot_id|>"
-        elif config.model_type == "cohere":
-            self.generation_promp_template = "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
-            self.user_req_template = "<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{user_req}<|END_OF_TURN_TOKEN|>"
-            self.system_injection_template = "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{system_injection}<|END_OF_TURN_TOKEN|>"
-            inst = [{"role": "system", "content": prompt}]
-            prompt_tokens = self.tokenizer.apply_chat_template(inst)
-            self.stop_token = self.tokenizer.eos_token
-        elif config.model_type == "phi3":
-            self.generation_promp_template = "<|assistant|>\n"
-            self.user_req_template = "<|user|>\n{user_req}<|end|>\n"
-            self.system_injection_template = "<|system|>\n{system_injection}<|end|>\n"
-            prompt_text = self.tokenizer.bos_token + f"<|system|>\n{prompt}<|end|>\n"
-            prompt_tokens = self.tokenizer(prompt_text)["input_ids"]
-            self.stop_token = "<|end|>"
-        else:
-            raise RuntimeError("Unknown model: " + config.model_type)
+        match config.model_type:
+            case "qwen2":
+                self.generation_promp_template = "<|im_start|>assistant\n"
+                self.user_req_template = "<|im_start|>user\n{user_req}<|im_end|>"
+                self.system_injection_template = "<|im_start|>system\n{system_injection}<|im_end|>"
+                self.tokens = [self.tokenizer.apply_chat_template([{"role": "system", "content": prompt}])]
+                self.stop_token = "<|im_end|>"
+            case "llama":
+                self.generation_promp_template = "<|start_header_id|>assistant<|end_header_id|>\n"
+                self.user_req_template = "<|start_header_id|>user<|end_header_id|>\n{user_req}<|eot_id|>"
+                self.system_injection_template = "<|start_header_id|>system<|end_header_id|>\n{system_injection}<|eot_id|>"
+                self.tokens = [self.tokenizer.apply_chat_template([{"role": "system", "content": prompt}])]
+                self.stop_token = "<|eot_id|>"
+            case "cohere":
+                self.generation_promp_template = "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
+                self.user_req_template = "<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{user_req}<|END_OF_TURN_TOKEN|>"
+                self.system_injection_template = "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{system_injection}<|END_OF_TURN_TOKEN|>"
+                self.tokens = [self.tokenizer.apply_chat_template([{"role": "system", "content": prompt}])]
+                self.stop_token = self.tokenizer.eos_token
+            case "phi3":
+                self.generation_promp_template = "<|assistant|>\n"
+                self.user_req_template = "<|user|>\n{user_req}<|end|>\n"
+                self.system_injection_template = "<|system|>\n{system_injection}<|end|>\n"
+                self.tokens = [self.tokenizer(self.tokenizer.bos_token + f"<|system|>\n{prompt}<|end|>\n")["input_ids"]]
+                self.stop_token = "<|end|>"
+            case _:
+                raise RuntimeError("Unknown model: " + config.model_type)
 
         self.llm_backend = llm_backend
         self.llm_backend.stop_token = self.stop_token
         self.llm_backend.base_model = base_model
         self.llm_backend.tokenizer = self.tokenizer
+        
         self.generation_prompt_tokens = self.tokenizer(self.generation_promp_template)["input_ids"]
-        self.tokens = [prompt_tokens]
-        logger.info("System prompt size: " + str(len(prompt_tokens)))
+        logger.info("System prompt size: " + str(len(self.tokens[0])))
 
     def sanitize(self, text):
         return text.replace("#", "").replace("<|", "").replace("|>", "")
@@ -93,14 +89,14 @@ class Aisha:
         self.tokens.append(response_tokens)
         return text_resp
 
-    def load_context(self, id, path=""):
-        file_name = path + str(id) + ".context"
+    def load_context(self, ctx_id, path=""):
+        file_name = path + str(ctx_id) + ".context"
         if os.path.isfile(file_name):
             with open(file_name) as f:
                 self.tokens = json.load(f)
 
-    def save_context(self, id, path=""):
-        file_name = path + str(id) + ".context"
+    def save_context(self, ctx_id, path=""):
+        file_name = path + str(ctx_id) + ".context"
         with open(file_name, "w") as f:
             json.dump(self.tokens, f)
 
