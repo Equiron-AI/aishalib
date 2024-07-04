@@ -2,7 +2,6 @@ import os
 import json
 import logging
 from transformers import AutoTokenizer, AutoConfig
-from aishalib.llmbackend import LlamaCppBackend
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ class Aisha:
 
         config = AutoConfig.from_pretrained(base_model)
 
-        if config.model_type == "qwen2":
+        if config.model_type == "qwen2" or config.model_type == "qwen2_moe":
             self.generation_promp_template = "<|im_start|>assistant\n"
             self.user_req_template = "<|im_start|>user\n{user_req}<|im_end|>"
             self.system_injection_template = "<|im_start|>system\n{system_injection}<|im_end|>"

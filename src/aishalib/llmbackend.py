@@ -37,7 +37,7 @@ class LlamaCppBackend:
         response.raise_for_status()
         stream = sseclient.SSEClient(response).events()
         text_resp = ""
-        async for event in stream:
+        for event in stream:
             parsed_event = json.loads(event.data)
             if parsed_event["stop"]:
                 break
@@ -54,16 +54,16 @@ class TogetherAiBackend:
         self.api_token = api_token
 
     def get_request_object(self, request_tokens, stream, temp, top_p):
-        return {"prompt": self.tokenizer.decode(request_tokens),
-                "model": self.base_model,
+        return {"model": self.base_model,
+                "prompt": self.tokenizer.decode(request_tokens),
+                "frequency_penalty": 0,
+                "presence_penalty": 0,
                 "max_tokens": self.max_predict,
                 "stop": [self.stop_token],
                 "temperature": temp,
                 "top_p": top_p,
                 "top_k": -1,
                 "repetition_penalty": 1,
-                "presence_penalty": 0,
-                "frequency_penalty": 0,
                 "stream": stream,
                 "min_p": 0}
 
@@ -91,7 +91,7 @@ class TogetherAiBackend:
         for event in stream:
             event_data = event.data
             parsed_event = json.loads(event_data)
-            if parsed_event["choices"][0]["finish_reason"] != None:
+            if parsed_event["choices"][0]["finish_reason"] is not None:
                 break
             content = parsed_event["choices"][0]["text"]
             text_resp += content
