@@ -3,6 +3,9 @@ README.md
 pyproject.toml
 src/aishalib/aishalib.py
 src/aishalib/llmbackend.py
+src/aishalib/memory.py
+src/aishalib/tools.py
+src/aishalib/utils.py
 src/aishalib.egg-info/PKG-INFO
 src/aishalib.egg-info/SOURCES.txt
 src/aishalib.egg-info/dependency_links.txt
