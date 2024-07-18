@@ -22,7 +22,7 @@ class LlamaCppBackend:
                 "typical_p": 1,
                 "presence_penalty": 0,
                 "frequency_penalty": 0,
-                "stop": [self.stop_token],
+                "stop": [self.stop_token, self.tokenizer.eos_token],
                 "cache_prompt": True}
 
     def completion(self, request_tokens, temp=0.5, top_p=0.5):
@@ -54,12 +54,13 @@ class TogetherAiBackend:
         self.api_token = api_token
 
     def get_request_object(self, request_tokens, stream, temp, top_p):
+        print(self.stop_token)
         return {"model": self.base_model,
                 "prompt": self.tokenizer.decode(request_tokens),
                 "frequency_penalty": 0,
                 "presence_penalty": 0,
                 "max_tokens": self.max_predict,
-                "stop": [self.stop_token],
+                "stop": [self.stop_token, self.tokenizer.eos_token],
                 "temperature": temp,
                 "top_p": top_p,
                 "top_k": -1,
@@ -111,7 +112,7 @@ class DeepInfraBackend:
             top_p = 0.1
         return {"input": self.tokenizer.decode(request_tokens),
                 "max_new_tokens": self.max_predict,
-                "stop": [self.stop_token],
+                "stop": [self.stop_token, self.tokenizer.eos_token],
                 "temperature": temp,
                 "top_p": top_p,
                 "top_k": 0,

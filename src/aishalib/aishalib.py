@@ -44,6 +44,12 @@ class Aisha:
                 self.system_injection_template = "<|system|>\n{system_injection}<|end|>\n"
                 self.tokens = [self.tokenizer(self.tokenizer.bos_token + f"<|system|>\n{prompt}<|end|>\n")["input_ids"]]
                 self.stop_token = "<|end|>"
+            case "gemma2":
+                self.generation_promp_template = "<start_of_turn>model\n"
+                self.user_req_template = "<start_of_turn>user\n{user_req}<end_of_turn>\n"
+                self.system_injection_template = "<start_of_turn>system\n{system_injection}<end_of_turn>\n"
+                self.tokens = [self.tokenizer(self.tokenizer.bos_token + f"<start_of_turn>system\n{prompt}<end_of_turn>\n")["input_ids"]]
+                self.stop_token = "<end_of_turn>"
             case _:
                 raise RuntimeError("Unknown model: " + config.model_type)
 
@@ -58,18 +64,18 @@ class Aisha:
     def sanitize(self, text):
         return text.replace("#", "").replace("<|", "").replace("|>", "")
 
-    def add_user_request(self, user_request, system_injection=""):
-        text = self.user_req_template.replace("{user_req}", self.sanitize(user_request.strip()))
+    def add_user_request(self, user_request, system_injection="", meta_info=""):
+        text = self.user_req_template.replace("{user_req}", self.sanitize(user_request.strip()) + meta_info)
         if system_injection:
             text += self.system_injection_template.replace("{system_injection}", system_injection)
         tokens = self.tokenizer(text)["input_ids"]
         self.tokens.append(tokens)
-        self._cut_context()
+        self._cut_context()  # Освобождаем место под ответ модели
 
     def add_system_injection(self, system_injection):
         text = self.system_injection_template.replace("{system_injection}", system_injection)
         self.tokens.append(self.tokenizer(text)["input_ids"])
-        self._cut_context()
+        self._cut_context()  # Освобождаем место под ответ модели
 
     def completion(self, temp=0.0, top_p=0.5):
         request_tokens = sum(self.tokens, [])
@@ -101,9 +107,10 @@ class Aisha:
     def _cut_context(self):
         busy_tokens = len(sum(self.tokens, []))
         free_tokens = self.max_context - busy_tokens
-        while free_tokens < self.max_predict:
-            free_tokens += len(self.tokens[1])
-            del self.tokens[1]
+        if free_tokens < self.max_predict:
+            while free_tokens < self.max_predict * 8:  # обрезаем с большим запасом, чтобы кеш контекста работал лучше
+                free_tokens += len(self.tokens[1])
+                del self.tokens[1]
 
     def clear_context(self):
         del self.tokens[1:]
