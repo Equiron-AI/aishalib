@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: aishalib
-Version: 0.0.22
+Version: 0.0.23
 Summary: AI Smart Human Assistant Library
 Author-email: Vladimir Petrukhin <man4j@ya.ru>
 Project-URL: Homepage, https://github.com/Equiron-AI/aishalib
@@ -12,7 +12,7 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: transformers>=4.42.4
+Requires-Dist: transformers>=4.43.1
 Requires-Dist: jinja2>=3.1.4
 Requires-Dist: sseclient-py
 Requires-Dist: pytz

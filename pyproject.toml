@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aishalib"
-version = "0.0.22"
+version = "0.0.23"
 authors = [
   { name="Vladimir Petrukhin", email="man4j@ya.ru" },
 ]
@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "transformers>=4.42.4",
+  "transformers>=4.43.1",
   "jinja2>=3.1.4",
   "sseclient-py",
   "pytz"

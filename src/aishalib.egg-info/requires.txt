@@ -1,4 +1,4 @@
-transformers>=4.42.4
+transformers>=4.43.1
 jinja2>=3.1.4
 sseclient-py
 pytz
