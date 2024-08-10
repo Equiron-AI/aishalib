@@ -71,7 +71,8 @@ class Aisha:
     def tokenize(self, text):
         tokens = self.tokenizer(text)["input_ids"]
         if self.tokenizer.bos_token_id:
-            tokens.remove(self.tokenizer.bos_token_id)
+            if self.tokenizer.bos_token_id in tokens:
+                tokens.remove(self.tokenizer.bos_token_id)
         return tokens
 
     def sanitize(self, text):
