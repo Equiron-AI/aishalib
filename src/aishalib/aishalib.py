@@ -117,9 +117,13 @@ class Aisha:
             with open(file_name) as f:
                 self.tokens = json.load(f)
 
-    def save_context(self, file_name):
+    def save_context(self, file_name, decoded=False):
         with open(file_name, "w") as f:
-            json.dump(self.tokens, f)
+            if decoded:
+                flat_tokens = sum(self.tokens, [])
+                f.write(self.tokenizer.decode(flat_tokens))                
+            else:
+                json.dump(self.tokens, f)
 
     def _cut_context(self):
         busy_tokens = len(sum(self.tokens, []))
